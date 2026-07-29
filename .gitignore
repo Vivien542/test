@@ -1,0 +1,8 @@
+node_modules/
+
+# Base de données locale du serveur
+server/data/
+
+# Journaux et fichiers temporaires
+*.log
+.DS_Store

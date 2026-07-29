@@ -5,6 +5,7 @@ services:
     name: membres
     runtime: node
     plan: free
+    branch: claude/react-native-user-app-wsvhmg
     buildCommand: npm run build
     startCommand: npm start
     healthCheckPath: /api/health

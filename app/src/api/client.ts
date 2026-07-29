@@ -25,18 +25,28 @@ export class ApiError extends Error {
 
 const DEFAULT_PORT = 3000;
 
+/** Ports servis par Metro en developpement web ; ailleurs, le web vient de l'API. */
+const METRO_WEB_PORTS = ['8081', '19006'];
+
 /**
  * Adresse de l'API.
  * 1. EXPO_PUBLIC_API_URL si elle est définie (cas d'un vrai déploiement) ;
- * 2. sinon l'IP de la machine qui sert le bundle Metro, ce qui marche depuis un
+ * 2. sur le web en production, l'API est servie par la même origine que la page ;
+ * 3. sinon l'IP de la machine qui sert le bundle Metro, ce qui marche depuis un
  *    téléphone sur le même réseau sans configuration ;
- * 3. sinon localhost.
+ * 4. sinon localhost.
  */
 export const API_URL = resolveApiUrl();
 
 function resolveApiUrl(): string {
   const configured = process.env.EXPO_PUBLIC_API_URL;
   if (configured) return configured.replace(/\/$/, '');
+
+  // Build web servi par le serveur lui-meme : tout est sur la meme origine.
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const { origin, port } = window.location;
+    if (!METRO_WEB_PORTS.includes(port)) return origin.replace(/\/$/, '');
+  }
 
   const hostUri = Constants.expoConfig?.hostUri ?? Constants.expoGoConfig?.debuggerHost;
   const host = hostUri?.split(':')[0];

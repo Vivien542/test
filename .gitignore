@@ -3,6 +3,9 @@ node_modules/
 # Base de données locale du serveur
 server/data/
 
+# Build web (regénéré par npm run build)
+app/dist/
+
 # Journaux et fichiers temporaires
 *.log
 .DS_Store

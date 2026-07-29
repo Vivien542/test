@@ -13,7 +13,37 @@ L'écran principal affiche la liste de tous les utilisateurs inscrits.
 Le serveur est nécessaire : la liste des utilisateurs est partagée entre tous les appareils,
 elle ne peut donc pas vivre uniquement dans le téléphone.
 
-## Démarrer
+## Ouvrir l'application depuis un téléphone, sans ordinateur
+
+L'API sert aussi la version web de l'application : une fois déployée, **une seule URL** suffit,
+à ouvrir dans le navigateur du téléphone (menu ⋮ → « Ajouter à l'écran d'accueil » pour avoir
+une icône).
+
+Depuis le navigateur du téléphone :
+
+1. Aller sur [render.com](https://render.com) et créer un compte avec GitHub (offre gratuite,
+   pas de carte bancaire).
+2. **New** → **Blueprint**, choisir ce dépôt. Render lit `render.yaml` et propose le service
+   `membres`. Valider avec **Apply**.
+3. Attendre la fin du build (quelques minutes : installation puis export web).
+4. Ouvrir l'URL fournie, du type `https://membres-xxxx.onrender.com`. C'est l'application.
+
+À savoir sur l'offre gratuite : le service s'endort après 15 minutes sans visite, le réveil
+prend une trentaine de secondes ; et le disque est effacé à chaque redéploiement, donc les
+comptes créés disparaissent. Pour les garder, il faut un disque persistant (offre payante) et
+pointer `DB_FILE` dessus, ou brancher une vraie base de données.
+
+Le même déploiement fonctionne sur Railway, Koyeb ou Fly.io : commande de build `npm run build`,
+commande de démarrage `npm start`.
+
+### Une vraie application Android (APK)
+
+La version web couvre le besoin. Pour une application installable, il faut passer par
+[EAS Build](https://docs.expo.dev/build/setup/), qui compile dans le cloud et se déclenche
+depuis expo.dev — donc aussi depuis un téléphone. Il faut alors renseigner
+`EXPO_PUBLIC_API_URL` avec l'URL du serveur déployé, puisque l'APK n'est plus servi par lui.
+
+## Démarrer en développement
 
 Deux terminaux.
 
@@ -43,9 +73,10 @@ L'application trouve l'API toute seule dans les cas courants :
 
 | Contexte | Adresse utilisée |
 | --- | --- |
+| Application web déployée | la même origine que la page (rien à configurer) |
 | Téléphone via Expo Go | l'IP de la machine qui sert le bundle, port 3000 |
 | Émulateur Android | `http://10.0.2.2:3000` |
-| iOS / navigateur | `http://localhost:3000` |
+| iOS / navigateur en développement | `http://localhost:3000` |
 
 Pour pointer ailleurs (serveur distant, port différent), définissez la variable d'environnement
 avant `npm start` :
@@ -83,8 +114,15 @@ Les comptes sont stockés dans `server/data/db.json`, créé au premier compte.
 ## Tests
 
 ```bash
-cd server && npm test      # 7 tests sur l'API et le stockage
+npm test                   # 9 tests sur l'API, le stockage et le service de la version web
 cd app && npm run typecheck
+```
+
+## Build web
+
+```bash
+npm run build              # installe tout et exporte app/dist
+npm start                  # http://localhost:3000 sert l'API et l'application
 ```
 
 ## Écrans

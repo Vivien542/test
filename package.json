@@ -1,0 +1,14 @@
+{
+  "name": "membres",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application Membres : API Express + application React Native (Expo)",
+  "scripts": {
+    "build": "npm --prefix server install --omit=dev && npm --prefix app install && npm --prefix app run build:web",
+    "start": "node server/src/index.js",
+    "test": "npm --prefix server test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

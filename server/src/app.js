@@ -1,14 +1,18 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { Store, publicUser, validateName } = require('./store');
 
+const DEFAULT_WEB_DIR = path.join(__dirname, '..', '..', 'app', 'dist');
+
 /**
  * Construit l'application Express.
- * @param {{store?: Store}} options
+ * @param {{store?: Store, webDir?: string}} options
  */
-function createApp({ store = new Store() } = {}) {
+function createApp({ store = new Store(), webDir = process.env.WEB_DIR || DEFAULT_WEB_DIR } = {}) {
   const app = express();
 
   app.use(cors());
@@ -65,9 +69,21 @@ function createApp({ store = new Store() } = {}) {
     return res.json({ user: publicUser(user) });
   });
 
-  app.use((req, res) => {
+  app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Route inconnue.' });
   });
+
+  // Version web de l'application, si elle a ete exportee (npm run build a la racine).
+  // Elle est alors servie sur la meme origine que l'API : une seule URL a ouvrir.
+  const indexFile = path.join(webDir, 'index.html');
+  if (fs.existsSync(indexFile)) {
+    app.use(express.static(webDir));
+    app.get(/.*/, (req, res) => res.sendFile(indexFile));
+  } else {
+    app.use((req, res) => {
+      res.status(404).json({ error: 'Route inconnue.' });
+    });
+  }
 
   // eslint-disable-next-line no-unused-vars -- Express identifie le handler d'erreur par son arité.
   app.use((err, req, res, next) => {

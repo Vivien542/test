@@ -10,10 +10,11 @@ const { createApp } = require('../src/app');
 const { Store } = require('../src/store');
 
 /** Démarre l'API sur un port libre et renvoie un client fetch simplifié. */
-async function withServer(run) {
+async function withServer(run, { webDir } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'users-api-'));
   const store = new Store(path.join(dir, 'db.json'));
-  const server = createApp({ store }).listen(0);
+  // Par defaut : pas de build web, pour tester l'API seule.
+  const server = createApp({ store, webDir: webDir ?? path.join(dir, 'absent') }).listen(0);
   await new Promise((resolve) => server.once('listening', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
 
@@ -29,8 +30,10 @@ async function withServer(run) {
     return { status: res.status, body: await res.json() };
   };
 
+  const raw = (url) => fetch(base + url);
+
   try {
-    await run({ call, store, dir });
+    await run({ call, raw, store, dir });
   } finally {
     await new Promise((resolve) => server.close(resolve));
     fs.rmSync(dir, { recursive: true, force: true });
@@ -105,6 +108,36 @@ test('permet de se renommer mais pas de voler un nom existant', async () => {
       body: { name: 'bob' },
     });
     assert.equal(stolen.status, 409);
+  });
+});
+
+test('sert la version web sur les routes qui ne sont pas des routes d API', async () => {
+  const webDir = fs.mkdtempSync(path.join(os.tmpdir(), 'users-web-'));
+  fs.writeFileSync(path.join(webDir, 'index.html'), '<!DOCTYPE html><title>Membres</title>');
+  try {
+    await withServer(
+      async ({ raw }) => {
+        const page = await raw('/profil');
+        assert.equal(page.status, 200);
+        assert.match(await page.text(), /Membres/);
+
+        // Les routes d'API inconnues restent du JSON, elles ne tombent pas sur la page web.
+        const missing = await raw('/api/inconnu');
+        assert.equal(missing.status, 404);
+        assert.equal((await missing.json()).error, 'Route inconnue.');
+      },
+      { webDir },
+    );
+  } finally {
+    fs.rmSync(webDir, { recursive: true, force: true });
+  }
+});
+
+test('sans build web, une route inconnue renvoie du JSON', async () => {
+  await withServer(async ({ raw }) => {
+    const res = await raw('/profil');
+    assert.equal(res.status, 404);
+    assert.equal((await res.json()).error, 'Route inconnue.');
   });
 });
 

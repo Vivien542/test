@@ -1,0 +1,13 @@
+# Deploiement en un service : l'API sert aussi la version web de l'application.
+# Render lit ce fichier quand on cree un « Blueprint » a partir du depot.
+services:
+  - type: web
+    name: membres
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
